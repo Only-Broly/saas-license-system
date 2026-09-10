@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Plain HTML Embed Test — Live Code Playground SDK</title>
+    <style>
+      /* Plain host page styles. No build tooling, no framework — this file
+         proves the distributed widget works standalone, exactly as an
+         external customer would consume it from a CDN or npm package. */
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 32px 20px 80px;
+        color: #111827;
+        background: #f8fafc;
+      }
+      h1 { font-size: 1.6rem; }
+      h2 { font-size: 1.1rem; margin-top: 48px; }
+      .box { border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; margin-top: 12px; background: white; }
+      .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+      .row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+
+      /* Same "hostile" generic-selector CSS as the React demo, applied here
+         too, so the RAW distributable artifact is tested against it — not
+         just the React demo build. */
+      button {
+        border: 3px dashed #d946ef !important;
+        background: #fde047 !important;
+        color: #111827 !important;
+        font-family: "Comic Sans MS", cursive !important;
+        text-transform: uppercase !important;
+        border-radius: 3px !important;
+        padding: 6px 10px;
+        cursor: pointer;
+      }
+      div { outline: 1px solid rgba(249, 115, 22, 0.5) !important; }
+      pre, code { background: #b91c1c !important; color: #fff !important; padding: 10px; display: block; border-radius: 6px; }
+      #log { max-height: 220px; overflow: auto; font-family: monospace; font-size: 12px; background: #0f172a; color: #d1fae5; padding: 10px; border-radius: 8px; }
+      .pass { color: #16a34a; font-weight: bold; }
+      .fail { color: #dc2626; font-weight: bold; }
+    </style>
+  </head>
+  <body>
+    <h1>🧪 Plain HTML Embed Test</h1>
+    <p>
+      This page contains <strong>zero</strong> frameworks and <strong>zero</strong> build tooling.
+      It imports the production artifact directly:
+      <code>./widget/live-code-playground.es.js</code>. It also ships the same
+      "hostile" global CSS (<code>button</code>, <code>div</code>, <code>pre</code>,
+      <code>code</code>) used in the React demo, to prove isolation holds in a real,
+      unrelated host document.
+    </p>
+
+    <h2>1. Minimal embed via <code>createPlayground()</code></h2>
+    <div id="playground-1" class="box"></div>
+
+    <h2>2. Declarative Web Component (<code>&lt;live-code-playground&gt;</code>)</h2>
+    <live-code-playground
+      id="wc-playground"
+      class="box"
+      config='{"theme":"light","colors":{"accent":"#059669"},"code":{"html":"<h2>Declarative tag</h2>","css":"h2{font-family:sans-serif;color:#059669}","javascript":"console.log(\"web component instance ready\")"}}'
+    ></live-code-playground>
+
+    <h2>3. Two independent instances</h2>
+    <div class="grid">
+      <div id="playground-a" class="box"></div>
+      <div id="playground-b" class="box"></div>
+    </div>
+
+    <h2>4. Programmatic control</h2>
+    <div class="box">
+      <div id="playground-ctrl"></div>
+      <div class="row">
+        <button id="btn-run">run()</button>
+        <button id="btn-reset">reset()</button>
+        <button id="btn-getcode">getCode()</button>
+        <button id="btn-setcode">setCode()</button>
+        <button id="btn-destroy">destroy()</button>
+        <button id="btn-recreate">recreate</button>
+      </div>
+      <pre id="code-output">(getCode output appears here)</pre>
+    </div>
+
+    <h2>5. Automated acceptance checks</h2>
+    <div class="box">
+      <div class="row">
+        <button id="btn-run-checks">Run automated checks</button>
+      </div>
+      <div id="log"></div>
+    </div>
+
+    <script type="module">
+      import { createPlayground, registerLiveCodePlayground } from "./widget/live-code-playground.es.js";
+
+      registerLiveCodePlayground();
+
+      // ---- 1. Minimal embed ------------------------------------------------
+      createPlayground({
+        target: "#playground-1",
+        code: {
+          html: "<h1>Hello World</h1>",
+          css: "h1 { color: #6366f1; font-family: sans-serif; }",
+          javascript: "console.log('Hello');",
+        },
+      });
+
+      // ---- 3. Two independent instances ------------------------------------
+      createPlayground({
+        target: "#playground-a",
+        theme: "dark",
+        code: { html: "<p>Instance A</p>", css: "p{color:#f8fafc;font-family:sans-serif}", javascript: "" },
+        persistence: { enabled: true, key: "embed-test-a" },
+      });
+      createPlayground({
+        target: "#playground-b",
+        theme: "light",
+        code: { html: "<p>Instance B</p>", css: "p{color:#0f172a;font-family:sans-serif}", javascript: "" },
+        persistence: { enabled: true, key: "embed-test-b" },
+      });
+
+      // ---- 4. Programmatic control -----------------------------------------
+      let ctrl = createPlayground({
+        target: "#playground-ctrl",
+        code: {
+          html: "<p id=\"g\">Hi</p>",
+          css: "p{font-family:sans-serif}",
+          javascript: "console.log('ctrl ready')",
+        },
+      });
+
+      document.getElementById("btn-run").onclick = () => ctrl.run();
+      document.getElementById("btn-reset").onclick = () => ctrl.reset();
+      document.getElementById("btn-getcode").onclick = () => {
+        document.getElementById("code-output").textContent = JSON.stringify(ctrl.getCode(), null, 2);
+      };
+      document.getElementById("btn-setcode").onclick = () => {
+        ctrl.setCode({ html: "<p id=\"g\">Updated via setCode()</p>" });
+      };
+      document.getElementById("btn-destroy").onclick = () => {
+        ctrl.destroy();
+        log("ctrl destroyed");
+      };
+      document.getElementById("btn-recreate").onclick = () => {
+        ctrl = createPlayground({
+          target: "#playground-ctrl",
+          code: { html: "<p id=\"g\">Recreated!</p>", css: "p{font-family:sans-serif}", javascript: "" },
+        });
+        log("ctrl recreated");
+      };
+
+      // ---- 5. Automated checks ----------------------------------------------
+      const logEl = document.getElementById("log");
+      function log(msg, cls) {
+        const line = document.createElement("div");
+        if (cls) line.className = cls;
+        line.textContent = msg;
+        logEl.appendChild(line);
+        logEl.scrollTop = logEl.scrollHeight;
+      }
+      function assert(condition, label) {
+        log((condition ? "PASS — " : "FAIL — ") + label, condition ? "pass" : "fail");
+      }
+      function wait(ms) {
+        return new Promise((resolve) => setTimeout(resolve, ms));
+      }
+
+      document.getElementById("btn-run-checks").onclick = async () => {
+        logEl.innerHTML = "";
+        log("Starting automated checks…");
+
+        assert(!!customElements.get("live-code-playground"), "custom element is registered");
+
+        const host = document.createElement("div");
+        host.style.position = "fixed";
+        host.style.left = "-9999px";
+        document.body.appendChild(host);
+
+        const events = [];
+        const instance = createPlayground({
+          target: host,
+          code: { html: "<p>start</p>", css: "", javascript: "console.log('hi')" },
+          preview: { autoRun: false },
+        });
+        instance.on("ready", () => events.push("ready"));
+        instance.on("change", () => events.push("change"));
+        instance.on("run", () => events.push("run"));
+        instance.on("reset", () => events.push("reset"));
+
+        await wait(50);
+        assert(events.includes("ready"), "ready event fired");
+
+        assert(instance.getCode().html === "<p>start</p>", "getCode() returns initial code");
+
+        instance.setCode({ html: "<p>changed</p>" });
+        assert(instance.getCode().html === "<p>changed</p>", "setCode() updates code");
+        assert(events.includes("change"), "change event fired after setCode()");
+
+        instance.run();
+        assert(events.includes("run"), "run event fired after run()");
+
+        instance.reset();
+        assert(instance.getCode().html === "<p>start</p>", "reset() restores starter code");
+        assert(events.includes("reset"), "reset event fired after reset()");
+
+        // Style isolation: widget internals must not inherit hostile host CSS.
+        const shadowRoot = instance.element.shadowRoot;
+        const root = shadowRoot && shadowRoot.querySelector(".lcp-root");
+        assert(!!root, "shadow root contains .lcp-root");
+        if (root) {
+          const outline = getComputedStyle(root).outlineStyle;
+          assert(outline === "none", "hostile `div{outline}` rule does not leak into shadow DOM");
+        }
+        const leaked = document.querySelector("body > .lcp-root");
+        assert(!leaked, "widget classes do not leak into the host document");
+
+        instance.destroy();
+        assert(host.children.length === 0, "destroy() removes all widget DOM");
+
+        const recreated = createPlayground({ target: host, code: { html: "<p>again</p>" } });
+        assert(!!recreated.getCode().html, "widget can be recreated after destroy()");
+        recreated.destroy();
+        host.remove();
+
+        log("All checks complete.");
+      };
+    </script>
+  </body>
+</html>

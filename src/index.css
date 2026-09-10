@@ -1,0 +1,51 @@
+@import "tailwindcss";
+
+/* =====================================================================
+   INTENTIONALLY HOSTILE HOST-PAGE CSS
+   ---------------------------------------------------------------------
+   This file styles the DEMO page only (never the widget — the widget's
+   styles live entirely inside a Shadow DOM and cannot be reached by these
+   rules). It exists to prove, in the browser, that the Live Code
+   Playground SDK is immune to aggressive/generic selectors a careless or
+   hostile third-party host page might ship.
+
+   Note on accessibility: colors below intentionally look chaotic, but
+   contrast ratios are kept AA-compliant (e.g. black-on-yellow, white-on-red)
+   so the test does not sacrifice readability or usability.
+   ===================================================================== */
+
+button {
+  border: 3px dashed #d946ef !important;
+  background: #fde047 !important;
+  color: #111827 !important;
+  font-family: "Comic Sans MS", "Comic Sans", cursive !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.03em !important;
+  border-radius: 3px !important;
+}
+
+textarea {
+  background: #111827 !important;
+  color: #4ade80 !important;
+  font-size: 20px !important;
+  border: 4px solid #f97316 !important;
+}
+
+pre,
+code {
+  background: #b91c1c !important;
+  color: #ffffff !important;
+  border-radius: 0 !important;
+}
+
+div {
+  outline: 1px solid rgba(249, 115, 22, 0.6) !important;
+}
+
+.lcp-demo-outline-probe {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+  opacity: 0;
+}
